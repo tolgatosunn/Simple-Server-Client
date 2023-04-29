@@ -1,0 +1,2 @@
+cryptography==40.0.2
+xmltodict==0.13.0
