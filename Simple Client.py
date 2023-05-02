@@ -3,15 +3,20 @@
 Title: Simple Client
 Author: Fu W.W. Howard
 GitHub: https://github.com/fujaidesu
-Date: 29 Apr 2023
-Code version: 1.1
+Date: 02 May 2023
+Code version: 1.2
 
 Description:
 Python3 file for Client sending data to Server.
 User can create, fill, serialize, and deliver a dictionary to a server
 or send a text file to a server after creating it.
-The pickling format of the dictionary can be pickle, JSON, or XML.
+The pickling format of the dictionary can be binary, JSON, or XML.
 The text can be encrypted within a text file.
+
+Modification:
+1. Divide the function into small functions.
+2. Add function to serialise the dictionary in binary, JSON, or XML format.
+
 """
 
 import socket
@@ -21,14 +26,51 @@ import os
 import pickle
 import xmltodict
 from cryptography.fernet import Fernet
+from dict2xml import dict2xml
+
+# function to serialise dictionary
+def data_serialisation(dictionary, data_format):
+    if data_format == 'binary':
+        # serialise data to disk using json
+        data = json.dumps(dictionary).encode('utf-8')
+    elif data_format == 'json':
+        # serialise data to disk using json
+        data = json.dumps(dictionary)
+    elif data_format == 'xml':
+        # serialise data to disk using xml
+        data = dict2xml(dictionary, wrap ='root', indent =' ')
+    return str(data)
+
+# function to perform encryption
+def data_encryption(data):
+    # Encryption label
+    ENCRYPTED = "<ISENCRYPTED>"
+    # perform encryption
+    key = Fernet.generate_key()
+    fernet = Fernet(key)
+    encMessage = fernet.encrypt(str(data).encode())
+    # send the key and encrypted message to server
+    data2send = str(key.decode())+ENCRYPTED+str(encMessage.decode())
+    return data2send
+            
+# function to read data from text file in different format
+def readFile(filename, file_format):
+    if file_format == '.json':
+        with codecs.open(filename, 'rb', encoding='utf-8') as f:
+            data = json.load(f)
+    elif file_format == '.pickle':
+        with open(filename, "rb") as f:
+            data = pickle.load(f)
+    elif file_format == '.xml':
+        with open(filename, "r") as f:
+            xml_content = f.read()
+            data = xmltodict.parse(xml_content)
+    return data
 
 # main function to send data to server
 # filename can be dictionary or text file in pickle, JSON or XML format.
 # if encryption is True, data to be sent will be encrypted, and vice versa.
 def sendtoServer(filename, encryption):
-    
-    # Encryption label
-    ENCRYPTED = "<ISENCRYPTED>"
     
     # device's IP address
     # 127.0.0.1 is the IP address of the local computer
@@ -45,34 +87,38 @@ def sendtoServer(filename, encryption):
     # if user input a dictionary
     if isinstance(filename, dict):
         
-        # serialise data to disk using json
-        data = json.dumps(filename)
+        # define default data format
+        #data_format = 'binary'
+        #data_format = 'json'
+        data_format = 'xml'
+            
+        try:
+            # serialise data in diferent format
+            data = data_serialisation(filename, data_format)
         
-        # check if the data needs to be encrypted
-        # if yes, perform encryption
-        if encryption == False:
-            # send data to server
-            s.send(data.encode())
-        else:
-            # perform encryption
-            key = Fernet.generate_key()
-            fernet = Fernet(key)
-            encMessage = fernet.encrypt(data.encode())
-            data2send = str(key.decode())+ENCRYPTED+str(encMessage.decode())
-            # send the key and encrypted message to server
+            # check if the data needs to be encrypted
+            # if yes, perform encryption
+            if encryption == True:
+                data2send = data_encryption(data)
+                print('Data is encrypted.')
+            else:
+                data2send = data
+                
+            # send data to server   
             s.send(str(data2send).encode())
-        
-        print('Data is sent to server.')
-        
+            print('Data is sent to server.')
+        except:
+            print('Please select one of the format: Binary, JSON or XML.')
+
     # if user input a text file
     # format can be one of the following: binary, JSON and XM  
     elif isinstance(filename, str):
         
         # get format of text file
-        file_name, file_extension = os.path.splitext(filename)
+        file_name, file_format = os.path.splitext(filename)
 
         # check format of text file
-        if file_extension == '.json' or file_extension == '.pickle' or file_extension == '.xml':
+        if file_format == '.json' or file_format == '.pickle' or file_format == '.xml':
                       
             # get the file size
             filesize = os.path.getsize(filename)
@@ -80,32 +126,19 @@ def sendtoServer(filename, encryption):
             try:   
                 # check if file exists
                 if filesize > 0:
-
-                    # read data from text file with different format
-                    if file_extension == '.json':
-                        with codecs.open(filename, 'rb', encoding='utf-8') as f:
-                            data = json.load(f)
-                    elif file_extension == '.pickle':
-                        with open(filename, "rb") as f:
-                            data = pickle.load(f)
-                    elif file_extension == '.xml':
-                        with open(filename, "r") as f:
-                            xml_content = f.read()
-                            data = xmltodict.parse(xml_content)
+                    # read data from text file in different format
+                    data = readFile(filename, file_format)
                     
                     # check if the data needs to be encrypted
                     # if yes, perform encryption
-                    if encryption == False:
-                        # send data to server
-                        s.send(str(data).encode())
+                    if encryption == True:
+                        data2send = encryption(data)
+                        print('Data is encrypted.')
                     else:
-                        # perform encryption
-                        key = Fernet.generate_key()
-                        fernet = Fernet(key)
-                        encMessage = fernet.encrypt(str(data).encode())
-                        data2send = str(key.decode())+ENCRYPTED+str(encMessage.decode())
-                        # send the key and encrypted message to server
-                        s.send(str(data2send).encode())
+                        data2send = data
+                    
+                    # send data to server   
+                    s.send(str(data2send).encode())
                     print('Data is sent to server.')
             except EOFError: 
                 # prevent input file which does not exist
