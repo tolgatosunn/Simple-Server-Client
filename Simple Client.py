@@ -29,6 +29,7 @@ from dict2xml import dict2xml
 import configparser
 import sys
 
+
 # function to serialise dictionary
 def dict_serialisation(dictionary, serialise, data_format):
     # check if the data needs to be serialised
@@ -104,6 +105,7 @@ def sendtoServer(input, encryption, pickling_format):
         # continue if file exists
         if filesize > 0:
             print('The config file does exist')
+
             config_obj.read(filepath)
             param = config_obj["setting"]
             SERVER_HOST = param["host"]
@@ -113,6 +115,7 @@ def sendtoServer(input, encryption, pickling_format):
         print('Configure file does not exist.')
         sys.exit()
 
+
     try:
         # Create a client socket
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -120,6 +123,7 @@ def sendtoServer(input, encryption, pickling_format):
     except Exception:
         print('Fail to create client socket.')
         sys.exit()
+
         
     try:
         # Connect to the server
@@ -128,6 +132,7 @@ def sendtoServer(input, encryption, pickling_format):
     except Exception:
         print('Fail to connect to the server.')
         sys.exit()
+
         
     # if user input a dictionary
     if isinstance(input, dict):
