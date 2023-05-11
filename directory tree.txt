@@ -1,9 +1,10 @@
 C:/
 Simple Client.py
 Simple Server.py
-test.json
-test.pickle
-test.xml
+config.py
+configfile.ini
+test1.txt
+test2.txt
 README.md
 requirements.txt
 directory tree.txt
