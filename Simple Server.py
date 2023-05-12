@@ -3,8 +3,8 @@
 Title: Simple Server
 Author: Fu W.W. Howard
 GitHub: https://github.com/fujaidesu
-Date: 08 May 2023
-Code version: 1.4
+Date: 12 May 2023
+Code version: 1.5
 
 Description:
 Python3 file for Server receiving data from Client.
@@ -17,10 +17,13 @@ The format of file to be saved can be one of the following:
 txt, pickle, JSON and XML.
 
 Modification(s):
-1. Add functions to check the type of received data.
-2. Add function to save file in txt format.
-3. host, port and buffer size are read from configure file.
-4. Add main function for receiving data from client.
+1. Input main function variables from config file.
+2. Delete close file procedures.
+3. Delete redundant enable_printing and enable_file.
+4. save2File function enables input of file name instead of file format.
+5. Add error handling in save2File.
+6. receivefromClient function enables input of file name instead of file format.
+7. Add printing for easy flow catching.
 
 """
 
@@ -89,42 +92,39 @@ def data_decryption(data):
         print('Fail to decrypt data.')
 
 # function to save data content to text file
-# format can be pickle, JSON or XML
-def save2File(data_received, file_format):
-    if file_format == 'txt':
-        txtFile = "received.txt"
-        with open(txtFile, 'w') as f:
-            f.write(data_received)
-            f.close()
-            print('The text file in txt format is created.')
-    elif file_format == 'pickle':
-        # serialise data to disk using pickle
-        pickleFile = "received.pickle"
-        with open(pickleFile, 'wb') as f:
-            pickle.dump(data_received, f)
-            f.close()
-            print('The text file in pickle format is created.')
-    elif file_format == 'json':
-        # serialise data to disk using json
-        jsonFile = 'received.json'
-        with codecs.open(jsonFile, 'w', encoding='utf-8') as f:
-            json.dump(data_received, f)
-            f.close()
-            print('The text file in json format is created.')
-    elif file_format == 'xml':
-        # serialise data to disk using xml
-        xmlFile = 'received.xml'
-        with open(xmlFile, 'w') as f:
-            xml = dict2xml(data_received, wrap='root', indent=' ')
-            f.write(xml)
-            f.close()
-            print('The text file in xml format is created.')
+# format can be txt, pickle, JSON or XML
+def save2File(data_received, file):
+    # get the file name and file format
+    file_name, file_format = str(file).split('.')
+    
+    if file_format in ['txt','pickle','json','xml']:
+        if file_format == 'txt':
+            # save data to txt file
+            with open(file, 'w') as f:
+                f.write(data_received)
+                print('The text file in txt format is created.')
+        elif file_format == 'pickle':
+            # save data to pickle file
+            with open(file, 'wb') as f:
+                pickle.dump(data_received, f)
+                print('The text file in pickle format is created.')
+        elif file_format == 'json':
+            # save data to json file
+            with codecs.open(file, 'w', encoding='utf-8') as f:
+                json.dump(data_received, f)
+                print('The text file in json format is created.')
+        elif file_format == 'xml':
+            # save data to xml file
+            with open(file, 'w') as f:
+                xml = dict2xml(data_received, wrap='root', indent=' ')
+                f.write(xml)
+                print('The text file in xml format is created.')
     else:
         # prevent unexpected input of file format
-        print('Please specific the file type.')
+        print('Please select one of the format: txt, Pickle, JSON or XML.') 
 
 # main function to receive data from client
-def receivefromClient(enable_printing, enable_file, file_format):
+def receivefromClient(enable_printing, enable_file, file):
     #Read configfile.ini file
     config_obj = configparser.ConfigParser()
     try:
@@ -142,6 +142,7 @@ def receivefromClient(enable_printing, enable_file, file_format):
             SERVER_HOST = param["host"]
             SERVER_PORT = int(param["port"])
             BUFFER_SIZE = int(param["buffer"])
+            
     except Exception: 
         # prevent input file which does not exist
         print('Configure file does not exist.')
@@ -157,77 +158,84 @@ def receivefromClient(enable_printing, enable_file, file_format):
         # The amount of unaccepted connections that the system
         # will tolerate before rejecting additional connections is 5
         s.listen(5)
-        
-        # flag to show connection to client
-        connected = True
+        print('Waiting for connection.')
     except Exception:
         print('Fail to create socket.')
 
-    # configurable option to print received data to screen
-    enable_printing = True
-
-    # configurable option to save received data to file
-    enable_file = True
-
-    # keep looping without closing server as default
-    while connected:
-        try:
-            # accept any connection
-            client_socket, address = s.accept()
-            print('Connected to client.')
-        except Exception:
-            print('An existing connection to client side is closed.')
+    try:
+        # accept any connection
+        client_socket, address = s.accept()
+        print('Connected to client.')
+    except Exception:
+        print('An existing connection to client side is closed.')
+    
+    try:
+        # receive data using client socket, not server socket
+        received = client_socket.recv(BUFFER_SIZE).decode()
         
-        try:
-            # receive data using client socket, not server socket
-            received = client_socket.recv(BUFFER_SIZE).decode()
-            
-            # check if the data is received
-            if len(received) > 0:
-                    
-                print('Data is received.')
+        # check if the data is received
+        if len(received) > 0:
                 
-                # check the type of received data and perform deserialisation/decryption
-                if is_dictionary_stream(received):
-                    data_received = received
-                elif is_pickle_stream(received):
-                    data_received = pickle.loads(eval(received))
-                elif is_json_stream(received):
-                    data_received = json.loads(received)
-                elif is_xml_stream(received):
-                    data_received = xmltodict.parse(received)
-                else:
-                    data_received = data_decryption(received)
+            print('Data is received.')
+            
+            # check the type of received data and perform deserialisation/decryption
+            if is_dictionary_stream(received):
+                data_received = str(received)
+            elif is_pickle_stream(received):
+                data_received = str(pickle.loads(eval(received)))
+            elif is_json_stream(received):
+                data_received = str(json.loads(received))
+            elif is_xml_stream(received):
+                data_received = str(xmltodict.parse(received))
+            else:
+                data_received = str(data_decryption(received))
+                
+            if data_received is not None:
+                # print received data to screen
+                if enable_printing:
+                    print('The received data:')
+                    print(data_received)
+
+                # save received data to file
+                # format can be one of the following: txt, Pickle, JSON and XML
+                if enable_file:
+                    # save data to text file
+                    save2File(data_received, file)
                     
-                if data_received is not None:
-                    # print received data to screen
-                    if enable_printing:
-                        print('The received data:')
-                        print(data_received)
-
-                    # save received data to file
-                    # format can be one of the following: txt, Pickle, JSON and XML
-                    if enable_file:
-
-                        if file_format in ['txt','pickle','json','xml']:
-                            # save data to text file
-                            save2File(data_received, file_format)
-                        else:
-                            print('Please select one of the format: txt, Pickle, JSON or XML.')    
-        except Exception:
-            print('Fail to receive data.')
+            # close the socket
+            s.close()
+            print('Server is closed.')
+        else:
+            print('Receive no data.')
+    except Exception:
+        print('Unexpected error occured.')
 
 if __name__ == "__main__":
     
-    # define default output file format
-    #file_format = 'txt'
-    #file_format = 'pickle'
-    #file_format = 'json'
-    file_format = 'xml'
-                        
-    # main function to receive data from client
-    # if enable_printing is True, received data will be printed to screen
-    # if enable_file is True, received data will be saved to file
-    # file_format can one of the format: txt, Pickle, JSON or XML
-    receivefromClient(True, True, file_format)
+    #Read configfile.ini file
+    config_obj = configparser.ConfigParser()
+    try:
+        filename = 'configfile.ini'
+        dir_path = os.path.dirname(os.path.realpath(__file__)) 
+        # get file path
+        filepath = dir_path+"\\"+filename
+        # check if file exists
+        # get the file size
+        filesize = os.path.getsize(filepath) 
+        # continue if file exists
+        if filesize > 0:
+            config_obj.read(filepath)
+            input = config_obj["server"]
+            PRINT = eval(input["print"])
+            SAVE = eval(input["save"])
+            FILE = input["file"]
+            
+            # main function to receive data from client
+            # if PRINT is True, received data will be printed to screen
+            # if SAVE is True, received data will be saved to file
+            # FILE can one of the format: txt, Pickle, JSON or XML
+            receivefromClient(PRINT, SAVE, FILE)
+    except Exception: 
+        # prevent input file which does not exist
+        print('Configure file does not exist.')
     
