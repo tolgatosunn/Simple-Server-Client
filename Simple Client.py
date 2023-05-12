@@ -154,7 +154,7 @@ if __name__ == "__main__":
     #Read configfile.ini file
     config_obj = configparser.ConfigParser()
     try:
-        filename = 'configfile.ini2'
+        filename = 'configfile.ini'
         dir_path = os.path.dirname(os.path.realpath(__file__)) 
         # get file path
         filepath = dir_path+"\\"+filename
