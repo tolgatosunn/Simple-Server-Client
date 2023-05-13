@@ -36,6 +36,7 @@ from dict2xml import dict2xml
 import xmltodict
 import os
 import configparser
+import sys
 
 # check if the data is dictionary
 def is_dictionary_stream(stream):
@@ -85,11 +86,13 @@ def data_decryption(data):
             # use the key to decrypt message
             decMessage = fernet.decrypt(encMessage)
             data_received = decMessage.decode()
+            print('Received data is decrypted')
         else:
             data_received = data
         return data_received
     except Exception:
-        print('Fail to decrypt data.')
+        print('Error: Fail to decrypt data.')
+        sys.exit()
 
 # function to save data content to text file
 # format can be txt, pickle, JSON or XML
@@ -121,7 +124,8 @@ def save2File(data_received, file):
                 print('The text file in xml format is created.')
     else:
         # prevent unexpected input of file format
-        print('Please select one of the format: txt, Pickle, JSON or XML.') 
+        print('Error: Please select one of the format: txt, Pickle, JSON or XML.') 
+        sys.exit()
 
 # main function to receive data from client
 def receivefromClient(enable_printing, enable_file, file):
@@ -145,7 +149,7 @@ def receivefromClient(enable_printing, enable_file, file):
             
     except Exception: 
         # prevent input file which does not exist
-        print('Configure file does not exist.')
+        print('Error: The config file does not exist')
 
     try:
         # create the TCP server socket
@@ -160,32 +164,37 @@ def receivefromClient(enable_printing, enable_file, file):
         s.listen(5)
         print('Waiting for connection.')
     except Exception:
-        print('Fail to create socket.')
+        print('Error: Fail to create server socket.')
+        sys.exit()
 
     try:
         # accept any connection
         client_socket, address = s.accept()
         print('Connected to client.')
     except Exception:
-        print('An existing connection to client side is closed.')
+        print('Error: Fail to connect to the client')
+        sys.exit()
     
     try:
         # receive data using client socket, not server socket
         received = client_socket.recv(BUFFER_SIZE).decode()
-        
+
         # check if the data is received
-        if len(received) > 0:
-                
+        if len(received) > 0:  
             print('Data is received.')
             
             # check the type of received data and perform deserialisation/decryption
             if is_dictionary_stream(received):
+                print('Received data is a dictionary.')
                 data_received = str(received)
             elif is_pickle_stream(received):
+                print('Received data is pickled.')
                 data_received = str(pickle.loads(eval(received)))
             elif is_json_stream(received):
+                print('Received data is in JSON format')
                 data_received = str(json.loads(received))
             elif is_xml_stream(received):
+                print('Received data is in XML format')
                 data_received = str(xmltodict.parse(received))
             else:
                 data_received = str(data_decryption(received))
@@ -204,9 +213,10 @@ def receivefromClient(enable_printing, enable_file, file):
                     
             # close the socket
             s.close()
-            print('Server is closed.')
+            print('Task Completed. Connection is closed.')
         else:
-            print('Receive no data.')
+            print('Error: Received no data. Probably, the input file is empty.')
+            sys.exit()
     except Exception:
         print('Unexpected error occured.')
 
@@ -229,6 +239,7 @@ if __name__ == "__main__":
             PRINT = eval(input["print"])
             SAVE = eval(input["save"])
             FILE = input["file"]
+            print('The config file exists and all the parameters have been assigned.')
             
             # main function to receive data from client
             # if PRINT is True, received data will be printed to screen
@@ -237,5 +248,5 @@ if __name__ == "__main__":
             receivefromClient(PRINT, SAVE, FILE)
     except Exception: 
         # prevent input file which does not exist
-        print('Configure file does not exist.')
+        print('Error: The config file does not exist')
     
