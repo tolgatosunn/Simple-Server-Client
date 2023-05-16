@@ -30,15 +30,15 @@ config.set('setting', 'buffer', '4096')
 
 # user input for client side
 config.add_section('client')
-#userinput = "{'Test': 1, 'Data': 2, 'Sample': 3}"
-userinput = "test1.txt" # content is dictionary
+userinput = "{'Test': 1, 'Data': 2, 'Sample': 3}"
+#userinput = "test1.txt" # content is dictionary
 #userinput = "test2.txt" # content is string
 #userinput = "UoL_logo.jpg"
 config.set('client', 'userinput', userinput)
 config.set('client', 'encryption', 'True')
-#pickling_format = 'binary'
+pickling_format = 'binary'
 #pickling_format = 'json'
-pickling_format = 'xml'
+#pickling_format = 'xml'
 #pickling_format = 'YAML' # for testing
 config.set('client', 'format', pickling_format)
 
@@ -54,17 +54,19 @@ This if clause sets filename variable for the server module.
 '''
 if userinput[-4:]=='.txt':
     filename = 'received.txt'
-elif isinstance(eval(userinput), dict):
-    if pickling_format=='binary':
-        filename ='received.pickle'
-    elif pickling_format=='json':
-        filename ='received.json'
-    elif pickling_format=='xml':
-        filename ='received.xml'
-    else:
-        filename = 'received.yaml'
 else:
-    filename = userinput
+    try:
+        if isinstance(eval(userinput), dict):
+            if pickling_format=='binary':
+                filename ='received.pickle'
+            elif pickling_format=='json':
+                filename ='received.json'
+            elif pickling_format=='xml':
+                filename ='received.xml'
+            else:
+                filename = 'received.yaml'
+    except:
+        filename = userinput
 
 config.set('server', 'file', filename)
 

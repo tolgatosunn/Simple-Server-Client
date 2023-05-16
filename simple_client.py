@@ -63,7 +63,7 @@ def dict_serialisation(dictionary, serialise, data_format):
                 print('The dictionary has been serialized in xml')
         except Exception:
             print('Error: An error occurred while serialization in XML')
-            sys.exit()                  
+            sys.exit()                
         
     else:
         data2send = dictionary
@@ -97,7 +97,7 @@ def data_encryption(data, encryption):
 def readFile(filename):
     try:
         # get folder path
-        dir_path = os.path.dirname(os.path.realpath(__file__)) 
+        dir_path = os.path.dirname(os.path.realpath(filename)) 
         # get file path
         filepath = dir_path+"\\"+filename
         # check if file exists
@@ -116,14 +116,13 @@ def readFile(filename):
         print('Error: Txt file can not be found.')
         sys.exit()
 
-# main function to send data to server 
-def sendtoServer(input, encryption, pickling_format):
-    
+
+def reading_config():
     #Read configfile.ini file
     config_obj = configparser.ConfigParser()
     try:
         filename = 'configfile.ini'
-        dir_path = os.path.dirname(os.path.realpath(__file__)) 
+        dir_path = os.path.dirname(os.path.realpath(filename)) 
         # get file path
         filepath = dir_path+"\\"+filename
         # check if file exists
@@ -135,17 +134,34 @@ def sendtoServer(input, encryption, pickling_format):
             param = config_obj["setting"]
             SERVER_HOST = param["host"]
             SERVER_PORT = int(param["port"])
+            
+            input_ = config_obj["client"]
+            USER_INPUT = input_["userinput"]
+            ENCRYPT = eval(input_["encryption"])
+            FORMAT = input_["format"]
+            print('The config file exists and all the parameters have been assigned.')
+            
+        return SERVER_HOST, SERVER_PORT, USER_INPUT, ENCRYPT, FORMAT
     except Exception: 
         # prevent input file which does not exist
         print('Error: The config file does not exist')
+        sys.exit()
 
+        
+# Create a client socket
+def create_socket():
     try:
         # Create a client socket
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print('A client socket is created.')
+        return s
     except Exception:
         print('Error: Fail to create client socket.')
+        sys.exit()
+
         
+# Connect to the server
+def connect_server(s, SERVER_HOST, SERVER_PORT):
     try:
         # Connect to the server
         s.connect((SERVER_HOST, SERVER_PORT)) 
@@ -153,30 +169,34 @@ def sendtoServer(input, encryption, pickling_format):
     except Exception:
         print('Error: Fail to connect to the server.')
         sys.exit()
+
+
+
+# Task Text file
+def text_file_process(input_, encryption):
+    # read content of text file
+    data = readFile(input_)
         
-    try:
-        # if user input a txt file
-        if input[-4:] == '.txt':
-            # read content of text file
-            data = readFile(input)
-        
-            if data is not None:
-                # check if the data needs to be encrypted
-                # if yes, perform encryption
-                data2send = data_encryption(data, encryption)
-            
-        elif isinstance(eval(input), dict):
-            if pickling_format in ['binary','json','xml']:
-                serialize = 1
-            else:
-                serialize = 0
-            # serialise data in diferent format
-            data2send = dict_serialisation(input, serialize, pickling_format)
+    if data is not None:
+        # check if the data needs to be encrypted
+        # if yes, perform encryption
+        data2send = data_encryption(data, encryption)
+        return data2send
     
-    except Exception:
-        print('Error: Input must be a txt file or a dictionary.')
-        sys.exit()
-    
+
+# Task dictionary 
+def dictionary_process(input_, picling_format):
+    if picling_format in ['binary','json','xml']:
+        serialise = 1
+    else:
+        serialise = 0
+    data2send = dict_serialisation(input_, serialise, picling_format)
+    return data2send
+
+
+
+# send to server
+def send_to_server(data2send,s):
     try:
         # send data to server   
         s.send(str(data2send).encode())
@@ -187,36 +207,40 @@ def sendtoServer(input, encryption, pickling_format):
         
     # close the socket
     s.close()
-    print('Task Completed. Connection is closed.')
-
-if __name__ == "__main__":
-
+    print('Task Completed. Connection is closed.')    
+    
+    
+    
+# main function to send data to server 
+def main_function():
+    
     #Read configfile.ini file
-    config_obj = configparser.ConfigParser()
-    try:
-        filename = 'configfile.ini'
-        dir_path = os.path.dirname(os.path.realpath(__file__)) 
-        # get file path
-        filepath = dir_path+"\\"+filename
-        # check if file exists
-        # get the file size
-        filesize = os.path.getsize(filepath) 
-        # continue if file exists
-
-        if filesize > 0:
-            config_obj.read(filepath)
-            input = config_obj["client"]
-            USER_INPUT = input["userinput"]
-            ENCRYPT = eval(input["encryption"])
-            FORMAT = input["format"]
-            print('The config file exists and all the parameters have been assigned.')
+    SERVER_HOST, SERVER_PORT, USER_INPUT, ENCRYPT, FORMAT = reading_config()
+    
+    # Create a client socket
+    s = create_socket()
         
-            # USER_INPUT can be dictionary or text file in txt format
-            # if ENCRYPT is True, data to be sent will be encrypted/serialised, and vice versa
-            # For dictionary, one of the pickling format: Binary, JSON or XML shall be selected.
-            # Please omit the input of FORMAT if text file name is input
-            sendtoServer(USER_INPUT, ENCRYPT, FORMAT)
+    # Connect to the server
+    connect_server(s, SERVER_HOST, SERVER_PORT)
+    
+    if USER_INPUT[-4:]=='.txt':
+        data2send = text_file_process(USER_INPUT, ENCRYPT)
+    else:
+        try:
+            eval(USER_INPUT)
+        except:
+            print('Error: Input must be a txt file or a dictionary.')
+            sys.exit()
             
-    except Exception: 
-        # prevent input file which does not exist
-        print('Error: The config file does not exist')
+    if USER_INPUT[-4:] != '.txt':
+        if isinstance(eval(USER_INPUT), dict):
+            data2send = dictionary_process(USER_INPUT, FORMAT)
+
+    
+    send_to_server(data2send,s)
+
+
+    
+if __name__ == "__main__":
+    main_function()
+
