@@ -1,10 +1,24 @@
-C:/
-Simple Client.py
-Simple Server.py
-config.py
-configfile.ini
-test1.txt
-test2.txt
-README.md
-requirements.txt
-directory tree.txt
+C:.
+¢x  config.py
+¢x  configfile.ini
+¢x  directory
+¢x  directory tree.txt
+¢x  LICENSE
+¢x  README.md
+¢x  requirements.txt
+¢x  simple_client.py
+¢x  simple_server.py
+¢x  test1.txt
+¢x  test2.txt
+¢x  UoL_logo.jpg
+¢x  __init__.py
+¢x  
+¢|¢wTests
+        client_unit_tests.py
+        Flow Chart v_3.vsdx
+        README_TEST.txt
+        Requirements_Test.txt
+        server_unit_tests.py
+        Test Document v_1.4.xlsx
+        __init__.py
+        

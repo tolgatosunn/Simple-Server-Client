@@ -1,36 +1,21 @@
 ## Simple Server/Client
-Server side can receive data from Client. It keeps looping without closing server as default. It can perform deserialisation if the data is deserialised. It can perform decryption if the data is encrypted.
+Server side can receive data from Client. It can perform deserialisation if the data is deserialised. It can perform decryption if the data is encrypted.
 It has configurable option to print received data to screen and or to save received data to file. The format of file to be saved can be one of the following: txt, pickle, JSON and XML.
 
 Client side can send data to Server. User can create, fill, serialize, and deliver a dictionary to a server or send a text file to a server after creating it. The pickling format of the dictionary can be pickle, JSON, or XML. The text can be encrypted within a text file. 
 
 ## Example of Usage
-Server and Client shall be ran in two seperated IDE. The usage of two Python3 files is shown as below:
-
-For Simple Server.py, main function:
-```python from line 233
-# main function to receive data from client
-# if PRINT is True, received data will be printed to screen
-# if SAVE is True, received data will be saved to file
-# FILE can one of the format: txt, Pickle, JSON or XML
-receivefromClient(PRINT, SAVE, FILE)
-```
-
-For Simple Client.py, main function:
-```python from line 171
-# USER_INPUT can be dictionary or text file in txt format
-# if ENCRYPT is True, data to be sent will be encrypted/serialised, and vice versa
-# For dictionary, one of the pickling format: Binary, JSON or XML shall be selected.
-# Please omit the input of FORMAT if text file name is input
-sendtoServer(USER_INPUT, ENCRYPT, FORMAT)
-```
-
-The host, port and buffer size can be modified in config.py.
-Also, the variables for main function in Simple Server.py and Simple Client.py can be changed in config.py.
-After running the config.py, the settings for the Simple Server.py and Simple Client.py will be stored in configfile.ini.
+Both the server and the client must run in separate IDEs. 
+The variables set in config.py provide the basis for the usage of two Python3 files.
+In config.py, the host, port, and buffer size can be changed.
+Additionally, config.py allows for the modification of the major function variables in simple_server.py and simple_client.py.
+The settings for the simple_server.py and simple_client.py will be saved in configfile.ini after running config.py.
 
 ## Performing Unit Tests
-It is able to set unit tests by changing the variables in the config.py. The text files are attached in repository. 
+By altering the variables in config.py, it may set unit tests. The repository attachment contains the text files.
+In the "Tests" folder are supplied common unit tests with explanations.
+simple_client.py's unit tests are provided by client_unit_tests.py, while simple_server.py's unit tests are provided by server_unit_tests.py.
+The "Test Document" contains a description of each unit test's objectives.
 
 ## Requirements
 There are extra packages that must be installed in order to use the program which are mentioned in requirements.txt as attached.
