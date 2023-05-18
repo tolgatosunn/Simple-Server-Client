@@ -11,10 +11,15 @@ from io import StringIO
 import os
 import socket
 import configparser
+import inspect
 from cryptography.fernet import Fernet
 
-sys.path.append("..")
-from simple_client import dict_serialisation, data_encryption, readFile\
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
+
+from simple_client import dict_serialisation, data_encryption, read_file\
 , reading_config, create_socket, connect_server, text_file_process\
 , dictionary_process, send_to_server, main_function
 
@@ -245,14 +250,14 @@ class TestDataEncryption(unittest.TestCase):
 
 class TestReadFile(unittest.TestCase):
     '''
-    This class performs unit tests of the "readFile"
+    This class performs unit tests of the "read_file"
     function in simple_client module.
     '''
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_reading_file_no_data(self, mock_stdout):
         '''
-        Tests the `readFile` function
+        Tests the `read_file` function
         with a file does not contain data.
         '''
         # Delete the content in testfile.txt
@@ -260,7 +265,7 @@ class TestReadFile(unittest.TestCase):
             catch.write('')
         # Check that the system exits
         with self.assertRaises(SystemExit):
-            readFile('testfile.txt')
+            read_file('testfile.txt')
             # Check that the error message was printed to the console
             self.assertEqual(mock_stdout.getvalue().strip(),
                              'Error: The file must contain data.')
@@ -269,12 +274,12 @@ class TestReadFile(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
     def test_reading_file_no_file(self, mock_stdout):
         '''
-        Tests the `readFile` function
+        Tests the `read_file` function
         with a file does not exist.
         '''
         # Check that the system exits
         with self.assertRaises(SystemExit):
-            readFile('nofile.txt')
+            read_file('nofile.txt')
             # Check that the error message was printed to the console
             self.assertEqual(mock_stdout.getvalue().strip(), 'Error: Txt file can not be found.')
 
@@ -352,6 +357,8 @@ class TestCreateSocket(unittest.TestCase):
         # Check that the informative message was printed to the console
         self.assertEqual(mock_stdout.getvalue().strip(), 'A client socket is created.')
 
+        soc.close()
+
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_create_socket_error(self, mock_stdout):
@@ -396,6 +403,8 @@ class TestConnectServer(unittest.TestCase):
         # Check that the informative message was printed to the console
         self.assertEqual(mock_stdout.getvalue().strip(), 'Connected to server.')
 
+        s_mock.close()
+
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_connect_server_failure(self, mock_stdout):
@@ -435,8 +444,8 @@ class TestTextFileProcess(unittest.TestCase):
         encryption = False
         data = "{'Test': 1, 'Data': 2, 'Sample': 3}"
 
-        # Create a mock readFile function that returns the data
-        with patch('simple_client.readFile', return_value=data):
+        # Create a mock read_file function that returns the data
+        with patch('simple_client.read_file', return_value=data):
             # Catch the print of the function to not show on the console
             with open(os.devnull, 'w', encoding="utf-8") as catch:
                 sys.stdout = catch
@@ -597,12 +606,15 @@ class TestMainFunction(unittest.TestCase):
         # Create a config file
         ConfigFileFunctions.config_parser()
         # Read the config file
-        server_host, server_port, _, _, file_, _, _, _ = \
+        server_host, server_port, _, _, _, userinput,encryption, format_ = \
                 ConfigFileFunctions.reading_config_file()
 
+        userinput = "test2.txt"
+
         # Define mock return values
-        mock_reading_config.return_value = (server_host, server_port, file_, False, 'txt')
-        mock_text_file_process.return_value = "{'Test': 1, 'Data': 2, 'Sample': 3}"
+        mock_reading_config.return_value = (server_host, server_port, userinput, \
+                                            encryption, format_)
+        mock_text_file_process.return_value = "This is a text file for testing."
 
         # Call the main function
         main_function()
@@ -611,8 +623,8 @@ class TestMainFunction(unittest.TestCase):
         mock_create_socket.assert_called_once()
         mock_connect_server.assert_called_once_with(mock_create_socket.return_value,
                                                     server_host, server_port)
-        mock_text_file_process.assert_called_once_with(file_, False)
-        mock_send_to_server.assert_called_once_with("{'Test': 1, 'Data': 2, 'Sample': 3}",
+        mock_text_file_process.assert_called_once_with(userinput, encryption)
+        mock_send_to_server.assert_called_once_with("This is a text file for testing.",
                                                     mock_create_socket.return_value)
 
 
@@ -633,12 +645,14 @@ class TestMainFunction(unittest.TestCase):
         # Create a config file
         ConfigFileFunctions.config_parser()
         # Read the config file
-        server_host, server_port, _, _, file_, _, _, _ = \
+        server_host, server_port, _, _, _, userinput, encryption, format_ = \
                 ConfigFileFunctions.reading_config_file()
 
-        file_ = "{'Name': 'Tolga', 'University': 'UoL'}"
+        userinput = "{'Name': 'Tolga', 'University': 'UoL'}"
+
         # Define mock return values
-        mock_reading_config.return_value = (server_host, server_port, file_, False, 'txt')
+        mock_reading_config.return_value = (server_host, server_port, userinput, \
+                                            encryption, format_)
         mock_dictionary_process.return_value = {'Name': 'Tolga', 'University': 'UoL'}
 
         # Call the main function
@@ -648,7 +662,7 @@ class TestMainFunction(unittest.TestCase):
         mock_create_socket.assert_called_once()
         mock_connect_server.assert_called_once_with(mock_create_socket.return_value,
                                                     server_host, server_port)
-        mock_dictionary_process.assert_called_once_with(file_, 'txt')
+        mock_dictionary_process.assert_called_once_with(userinput, format_)
         mock_send_to_server.assert_called_once_with({'Name': 'Tolga', 'University': 'UoL'},
                                                     mock_create_socket.return_value)
 
