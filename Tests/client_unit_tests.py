@@ -2,6 +2,10 @@
 This module performs unit tests of the functions in
 "simple_client.py" module in the Simple Server Client Project.
 '''
+# Prevent false positive pylint warnings for PEP8 score
+# pylint: disable=E0611
+# pylint: disable=C0413
+# pylint: disable=W0613
 
 import unittest
 from unittest.mock import patch, Mock
@@ -14,7 +18,6 @@ import configparser
 import inspect
 from cryptography.fernet import Fernet
 
-
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
@@ -25,69 +28,64 @@ from simple_client import dict_serialisation, data_encryption, read_file\
 
 
 
-class ConfigFileFunctions():
+def config_parser(self):
     '''
-    This class contains functions that create and read config file.
+    This function creates a mock config file
+    to use in the test functions.
+    '''
+    config = configparser.ConfigParser()
+
+    # setting common setting
+    config.add_section('setting')
+    config.set('setting', 'host', '127.0.0.1')
+    config.set('setting', 'port', '9090')
+    config.set('setting', 'buffer', '4096')
+
+    # setting user inputs for client side
+    config.add_section('client')
+    userinput = "test1.txt" # content is dictionary
+    config.set('client', 'userinput', userinput)
+    config.set('client', 'encryption', 'True')
+    pickling_format = 'xml'
+    config.set('client', 'format', pickling_format)
+
+    # setting user inputs for server side
+    config.add_section('server')
+    config.set('server', 'print', 'True')
+    config.set('server', 'save', 'True')
+    config.set('server', 'file', userinput)
+
+    # write the new structure to the new file
+    filename = 'configfile.ini'
+    with open(filename, 'w', encoding="utf-8") as fill:
+        config.write(fill)
+
+
+def reading_config_file(self):
+    '''
+    This function reads a mock config file
+    to get variables for the test functions.
     '''
 
-    def config_parser():
-        '''
-        This function creates a mock config file
-        to use in the test functions.
-        '''
-        config = configparser.ConfigParser()
+    config_obj = configparser.ConfigParser()
+    sys.path.append("..")
+    config_obj.read('configfile.ini')
+    # Reading common settings
+    param = config_obj["setting"]
+    server_host = param["host"]
+    server_port = int(param["port"])
+    # Reading Server settings
+    param_server = config_obj["server"]
+    print_ = param_server["print"]
+    save_ = param_server["save"]
+    file_ = param_server["file"]
+    # Reading Client settings
+    param_client = config_obj["client"]
+    userinput = param_client["userinput"]
+    encryption = param_client["encryption"]
+    format_ = param_client["format"]
 
-        # setting common setting
-        config.add_section('setting')
-        config.set('setting', 'host', '127.0.0.1')
-        config.set('setting', 'port', '9090')
-        config.set('setting', 'buffer', '4096')
-
-        # setting user inputs for client side
-        config.add_section('client')
-        userinput = "test1.txt" # content is dictionary
-        config.set('client', 'userinput', userinput)
-        config.set('client', 'encryption', 'True')
-        pickling_format = 'xml'
-        config.set('client', 'format', pickling_format)
-
-        # setting user inputs for server side
-        config.add_section('server')
-        config.set('server', 'print', 'True')
-        config.set('server', 'save', 'True')
-        config.set('server', 'file', userinput)
-
-        # write the new structure to the new file
-        filename = 'configfile.ini'
-        with open(filename, 'w', encoding="utf-8") as fill:
-            config.write(fill)
-
-
-    def reading_config_file():
-        '''
-        This function reads a mock config file
-        to get variables for the test functions.
-        '''
-
-        config_obj = configparser.ConfigParser()
-        sys.path.append("..")
-        config_obj.read('configfile.ini')
-        # Reading common settings
-        param = config_obj["setting"]
-        server_host = param["host"]
-        server_port = int(param["port"])
-        # Reading Server settings
-        param_server = config_obj["server"]
-        print_ = param_server["print"]
-        save_ = param_server["save"]
-        file_ = param_server["file"]
-        # Reading Client settings
-        param_client = config_obj["client"]
-        userinput = param_client["userinput"]
-        encryption = param_client["encryption"]
-        format_ = param_client["format"]
-
-        return server_host, server_port, print_, save_, file_, userinput, encryption, format_
+    return server_host, server_port, print_, save_, file_, userinput, encryption, format_
 
 
 
@@ -297,10 +295,10 @@ class TestReadingConfig(unittest.TestCase):
         gets all the necessary variables from the config file.
         '''
         # Creating config file
-        ConfigFileFunctions.config_parser()
+        config_parser(self)
         # Reading the config file
         server_host, server_port, _, _, _, userinput, _, format_ = \
-                       ConfigFileFunctions.reading_config_file()
+                       reading_config_file(self)
 
         # Getting the variables from the "reading_config" function
         with open(os.devnull, 'w', encoding="utf-8") as catch:
@@ -393,7 +391,7 @@ class TestConnectServer(unittest.TestCase):
         # Create a mock socket object and server host and port
         s_mock = Mock(spec=socket.socket)
         # Read config file and assign the variables.
-        server_host, server_port, _, _, _, _, _, _ = ConfigFileFunctions.reading_config_file()
+        server_host, server_port, _, _, _, _, _, _ = reading_config_file(self)
 
         # Call the connect_server function
         connect_server(s_mock, server_host, server_port)
@@ -418,7 +416,7 @@ class TestConnectServer(unittest.TestCase):
         # Create a mock exception
         s_mock.connect.side_effect = Exception('Can not connect.')
         # Read config file and assign the variables.
-        server_host, server_port, _, _, _, _, _, _ = ConfigFileFunctions.reading_config_file()
+        server_host, server_port, _, _, _, _, _, _ = reading_config_file(self)
 
         # Call the connect_server function
         # Check that the systems exits
@@ -516,10 +514,10 @@ class TestSendtoServer(unittest.TestCase):
         , activates the server socket and connects to the server.
         '''
         # Create a config file
-        ConfigFileFunctions.config_parser()
+        config_parser(self)
         # Read the config file
         server_host, server_port, _, _, _, _, _, _ = \
-                ConfigFileFunctions.reading_config_file()
+                reading_config_file(self)
 
         # Initialize server socket
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -604,10 +602,10 @@ class TestMainFunction(unittest.TestCase):
         and sends the data.
         '''
         # Create a config file
-        ConfigFileFunctions.config_parser()
+        config_parser(self)
         # Read the config file
         server_host, server_port, _, _, _, userinput,encryption, format_ = \
-                ConfigFileFunctions.reading_config_file()
+                reading_config_file(self)
 
         userinput = "test2.txt"
 
@@ -643,10 +641,10 @@ class TestMainFunction(unittest.TestCase):
         and sends the data.
         '''
         # Create a config file
-        ConfigFileFunctions.config_parser()
+        config_parser(self)
         # Read the config file
         server_host, server_port, _, _, _, userinput, encryption, format_ = \
-                ConfigFileFunctions.reading_config_file()
+                reading_config_file(self)
 
         userinput = "{'Name': 'Tolga', 'University': 'UoL'}"
 
@@ -679,10 +677,10 @@ class TestMainFunction(unittest.TestCase):
         when the input is not a dictionary or text file.
         '''
         # Create a config file
-        ConfigFileFunctions.config_parser()
+        config_parser(self)
         # Read the config file
         server_host, server_port, _, _, file_, _, _, _ = \
-                ConfigFileFunctions.reading_config_file()
+                reading_config_file(self)
 
         # Define jpg file to fail the main_function
         file_ = 'UoL_logo.jpg'
