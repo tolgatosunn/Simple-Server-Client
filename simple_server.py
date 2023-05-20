@@ -3,8 +3,8 @@
 Title: Simple Server
 Author: Fu W.W. Howard
 GitHub: https://github.com/fujaidesu
-Date: 18 May 2023
-Code version: 1.6
+Date: 20 May 2023
+Code version: 1.7
 
 Description:
 Python3 file for Server receiving data from Client.
@@ -17,12 +17,7 @@ The format of file to be saved can be one of the following:
 txt, pickle, JSON and XML.
 
 Modification(s):
-1. Add reading_config function.
-2. Add create_socket function.
-3. Add connect_client function.
-4. Add printing_data function.
-5. Add receive_from_client function.
-6. Add main_function function.
+1. Renaming some variables.
 """
 
 import sys
@@ -156,8 +151,8 @@ def data_decryption(data):
             key, message = str(data).split(encrypted)
             fernet = Fernet(key)
             # use the key to decrypt message
-            message = fernet.decrypt(message)
-            data_received = message.decode()
+            dec_message = fernet.decrypt(message)
+            data_received = dec_message.decode()
             print('Received data is decrypted.')
         else:
             data_received = data

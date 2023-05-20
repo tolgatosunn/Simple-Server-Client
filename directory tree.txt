@@ -1,24 +1,33 @@
 C:.
-¢x  config.py
-¢x  configfile.ini
-¢x  directory
-¢x  directory tree.txt
-¢x  LICENSE
-¢x  README.md
-¢x  requirements.txt
-¢x  simple_client.py
-¢x  simple_server.py
-¢x  test1.txt
-¢x  test2.txt
-¢x  UoL_logo.jpg
-¢x  __init__.py
-¢x  
-¢|¢wTests
-        client_unit_tests.py
-        Flow Chart v_3.vsdx
-        README_TEST.txt
-        Requirements_Test.txt
-        server_unit_tests.py
-        Test Document v_1.4.xlsx
-        __init__.py
+|   config.py
+|   configfile.ini
+|   directory tree.txt
+|   LICENSE
+|   README.md
+|   requirements.txt
+|   simple_client.py
+|   simple_server.py
+|   test1.txt
+|   test2.txt
+|   test_file_size.txt
+|   UoL_logo.jpg
+|   __init__.py
+|   
++---Tests
+|   |   client_unit_tests.py
+|   |   configfile.ini
+|   |   Flow Chart v_3.vsdx
+|   |   README_TEST.txt
+|   |   Requirements_Test.txt
+|   |   server_unit_tests.py
+|   |   Test Document v_1.5.xlsx
+|   |   __init__.py
+|   |   
+|   \---__pycache__
+|           client_unit_tests.cpython-38.pyc
+|           server_unit_tests.cpython-38.pyc
+|           
+\---__pycache__
+        simple_client.cpython-311.pyc
+        simple_server.cpython-311.pyc
         
