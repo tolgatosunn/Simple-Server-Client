@@ -3,7 +3,7 @@
 Title: Simple Client
 Author: Fu W.W. Howard
 GitHub: https://github.com/fujaidesu
-Date: 18 May 2023
+Date: 20 May 2023
 Code version: 1.7
 
 Description:
@@ -14,12 +14,7 @@ The pickling format of the dictionary can be binary, JSON, or XML.
 The text can be encrypted within a text file.
 
 Modification(s):
-1. Add reading_config function.
-2. Add create_socket function.
-3. Add connect_server function.
-4. Add text_file_process function.
-5. Add dictionary_process function.
-6. Add send_to_server function.
+1. Fix bugs.
 """
 
 import sys
@@ -109,7 +104,7 @@ def read_file(filename, buffer_size):
         # get the file size
         filesize = os.path.getsize(filepath)
         # continue if file exists
-        if filesize < buffer_size and filesize < 8192:
+        if filesize < buffer_size and filesize <= 8192:
             if filesize > 0:
                 with open(filepath, 'r', encoding = 'utf-8') as myfile:
                     read_data = myfile.read().splitlines()
