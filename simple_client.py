@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
+    # -*- coding: utf-8 -*-
 """
 Title: Simple Client
 Author: Fu W.W. Howard
 GitHub: https://github.com/fujaidesu
-Date: 18 May 2023
-Code version: 1.6
+Date: 20 May 2023
+Code version: 1.7
 
 Description:
 Python3 file for Client sending data to Server.
@@ -14,12 +14,7 @@ The pickling format of the dictionary can be binary, JSON, or XML.
 The text can be encrypted within a text file.
 
 Modification(s):
-1. Add reading_config function.
-2. Add create_socket function.
-3. Add connect_server function.
-4. Add text_file_process function.
-5. Add dictionary_process function.
-6. Add send_to_server function.
+1. Fix bugs.
 """
 
 import sys
@@ -96,7 +91,7 @@ def data_encryption(data, encryption):
         print('Error: An error occurred during the encryption.')
         sys.exit()
 
-def read_file(filename):
+def read_file(filename, buffer_size):
     """
     function to read data from text file
     """
@@ -109,13 +104,19 @@ def read_file(filename):
         # get the file size
         filesize = os.path.getsize(filepath)
         # continue if file exists
-        if filesize > 0:
-            with open(filepath, 'r') as myfile:
-                data = myfile.read()
-                return data
+        if filesize < buffer_size and filesize <= 8192:
+            if filesize > 0:
+                with open(filepath, 'r', encoding = 'utf-8') as myfile:
+                    read_data = myfile.read().splitlines()
+                    data = ''.join(read_data)
+                    return data
+            else:
+                print('Error: The file must contain data.')
+                sys.exit()
         else:
-            print('Error: The file must contain data.')
+            print('Error: The file size should not be greater buffer size and 8192 bytes.')
             sys.exit()
+
     except Exception:
         # prevent input file which does not exist
         print('Error: Txt file can not be found.')
@@ -140,12 +141,13 @@ def reading_config():
             param = config_obj["setting"]
             server_host = param["host"]
             server_port = int(param["port"])
+            buffer_size = int(param["buffer"])
             input_ = config_obj["client"]
             user_input = input_["userinput"]
             encrypt = ast.literal_eval(input_["encryption"])
             data_format = input_["format"]
             print('The config file exists and all the parameters have been assigned.')
-            return server_host, server_port, user_input, encrypt, data_format
+            return server_host, server_port, buffer_size, user_input, encrypt, data_format
     except Exception:
         # prevent input file which does not exist
         print('Error: The config file does not exist')
@@ -174,13 +176,13 @@ def connect_server(socket_s, server_host, server_port):
         print('Error: Fail to connect to the server.')
         sys.exit()
 
-def text_file_process(user_input, encryption):
+def text_file_process(user_input, encryption, buffer_size):
     """
     function to read content of text file
     check if the data needs to be encrypted
     if yes, perform encryption
     """
-    data = read_file(user_input)
+    data = read_file(user_input, buffer_size)
     if data is not None:
         data2send = data_encryption(data, encryption)
         return data2send
@@ -217,14 +219,14 @@ def main_function():
     main function to send data to server
     """
     # Read configfile.ini file
-    server_host, server_port, user_input, encrypt, data_format = reading_config()
+    server_host, server_port, buffer_size, user_input, encrypt, data_format = reading_config()
     # Create a client socket
     socket_s = create_socket()
     # Connect to the server
     connect_server(socket_s, server_host, server_port)
     # Check user input first
     if user_input[-4:]=='.txt':
-        data2send = text_file_process(user_input, encrypt)
+        data2send = text_file_process(user_input, encrypt, buffer_size)
     else:
         try:
             isdictionary = ast.literal_eval(user_input)

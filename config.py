@@ -30,9 +30,10 @@ config.set('setting', 'buffer', '4096')
 
 # user input for client side
 config.add_section('client')
-userinput = "{'Test': 1, 'Data': 2, 'Sample': 3}"
+#userinput = "{'Test': 1, 'Data': 2, 'Sample': 3}"
 #userinput = "test1.txt" # content is dictionary
-#userinput = "test2.txt" # content is string
+userinput = "test2.txt" # content is string
+#userinput = "test_file_size.txt" # tests the file size
 #userinput = "UoL_logo.jpg"
 config.set('client', 'userinput', userinput)
 config.set('client', 'encryption', 'True')

@@ -258,12 +258,14 @@ class TestReadFile(unittest.TestCase):
         Tests the `read_file` function
         with a file does not contain data.
         '''
+        buffer_size = 4096
+        
         # Delete the content in testfile.txt
         with open('testfile.txt', 'w', encoding="utf-8") as catch:
             catch.write('')
         # Check that the system exits
         with self.assertRaises(SystemExit):
-            read_file('testfile.txt')
+            read_file('testfile.txt', buffer_size)
             # Check that the error message was printed to the console
             self.assertEqual(mock_stdout.getvalue().strip(),
                              'Error: The file must contain data.')
@@ -275,9 +277,12 @@ class TestReadFile(unittest.TestCase):
         Tests the `read_file` function
         with a file does not exist.
         '''
+        
+        buffer_size = 4096
+        
         # Check that the system exits
         with self.assertRaises(SystemExit):
-            read_file('nofile.txt')
+            read_file('nofile.txt', buffer_size)
             # Check that the error message was printed to the console
             self.assertEqual(mock_stdout.getvalue().strip(), 'Error: Txt file can not be found.')
 
@@ -303,7 +308,7 @@ class TestReadingConfig(unittest.TestCase):
         # Getting the variables from the "reading_config" function
         with open(os.devnull, 'w', encoding="utf-8") as catch:
             sys.stdout = catch
-            host, port, userinput_, encrypt, _format_ = reading_config()
+            host, port, buffer_size, userinput_, encrypt, _format_ = reading_config()
             sys.stdout = sys.__stdout__
 
         # Checking the results
@@ -441,6 +446,7 @@ class TestTextFileProcess(unittest.TestCase):
         input_ = 'test1.txt'
         encryption = False
         data = "{'Test': 1, 'Data': 2, 'Sample': 3}"
+        buffer_size = 4096
 
         # Create a mock read_file function that returns the data
         with patch('simple_client.read_file', return_value=data):
@@ -448,7 +454,7 @@ class TestTextFileProcess(unittest.TestCase):
             with open(os.devnull, 'w', encoding="utf-8") as catch:
                 sys.stdout = catch
                 # Call the text_file_process function
-                result = text_file_process(input_, encryption)
+                result = text_file_process(input_, encryption, buffer_size)
                 sys.stdout = sys.__stdout__
 
                 # Check that the result matches with the data
@@ -604,14 +610,14 @@ class TestMainFunction(unittest.TestCase):
         # Create a config file
         config_parser(self)
         # Read the config file
-        server_host, server_port, _, _, _, userinput,encryption, format_ = \
+        server_host, server_port, buffer_size, _, _, userinput,encryption, format_ = \
                 reading_config_file(self)
 
         userinput = "test2.txt"
 
         # Define mock return values
-        mock_reading_config.return_value = (server_host, server_port, userinput, \
-                                            encryption, format_)
+        mock_reading_config.return_value = (server_host, server_port, buffer_size, \
+                                            userinput, encryption, format_)
         mock_text_file_process.return_value = "This is a text file for testing."
 
         # Call the main function
@@ -621,7 +627,7 @@ class TestMainFunction(unittest.TestCase):
         mock_create_socket.assert_called_once()
         mock_connect_server.assert_called_once_with(mock_create_socket.return_value,
                                                     server_host, server_port)
-        mock_text_file_process.assert_called_once_with(userinput, encryption)
+        mock_text_file_process.assert_called_once_with(userinput, encryption, buffer_size)
         mock_send_to_server.assert_called_once_with("This is a text file for testing.",
                                                     mock_create_socket.return_value)
 
@@ -643,14 +649,14 @@ class TestMainFunction(unittest.TestCase):
         # Create a config file
         config_parser(self)
         # Read the config file
-        server_host, server_port, _, _, _, userinput, encryption, format_ = \
+        server_host, server_port, buffer_size, _, _, userinput, encryption, format_ = \
                 reading_config_file(self)
 
         userinput = "{'Name': 'Tolga', 'University': 'UoL'}"
 
         # Define mock return values
-        mock_reading_config.return_value = (server_host, server_port, userinput, \
-                                            encryption, format_)
+        mock_reading_config.return_value = (server_host, server_port, buffer_size, \
+                                            userinput, encryption, format_)
         mock_dictionary_process.return_value = {'Name': 'Tolga', 'University': 'UoL'}
 
         # Call the main function
@@ -679,13 +685,13 @@ class TestMainFunction(unittest.TestCase):
         # Create a config file
         config_parser(self)
         # Read the config file
-        server_host, server_port, _, _, file_, _, _, _ = \
+        server_host, server_port, buffer_size, _, file_, _, _, _ = \
                 reading_config_file(self)
 
         # Define jpg file to fail the main_function
         file_ = 'UoL_logo.jpg'
         # Define mock return values
-        mock_reading_config.return_value = (server_host, server_port, file_, False, 'txt')
+        mock_reading_config.return_value = (server_host, server_port, buffer_size, file_, False, 'txt')
 
         with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
             # Call the main_function function
