@@ -1,4 +1,6 @@
-Requirements
+*** Requirements ***
+
+Python 3.8.16
 MS Excel
 MS Word
 MS Visio
