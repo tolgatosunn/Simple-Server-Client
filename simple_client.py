@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+    # -*- coding: utf-8 -*-
 """
 Title: Simple Client
 Author: Fu W.W. Howard
@@ -111,8 +111,9 @@ def read_file(filename, buffer_size):
         # continue if file exists
         if filesize < buffer_size and filesize < 8096:
             if filesize > 0:
-                with open(filepath, 'r') as myfile:
-                    data = myfile.read()
+                with open(filepath, 'r', encoding = 'utf-8') as myfile:
+                    read_data = myfile.read().splitlines()
+                    data = ''.join(read_data)
                     return data
             else:
                 print('Error: The file must contain data.')
