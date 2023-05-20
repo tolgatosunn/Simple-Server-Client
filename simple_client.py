@@ -109,7 +109,7 @@ def read_file(filename, buffer_size):
         # get the file size
         filesize = os.path.getsize(filepath)
         # continue if file exists
-        if filesize < buffer_size and filesize < 8096:
+        if filesize < buffer_size and filesize < 8192:
             if filesize > 0:
                 with open(filepath, 'r', encoding = 'utf-8') as myfile:
                     read_data = myfile.read().splitlines()
@@ -119,7 +119,7 @@ def read_file(filename, buffer_size):
                 print('Error: The file must contain data.')
                 sys.exit()
         else:
-            print('Error: The file size should not be greater buffer size and 8 MB.')
+            print('Error: The file size should not be greater buffer size and 8192 bytes.')
             sys.exit()
 
     except Exception:
