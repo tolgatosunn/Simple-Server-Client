@@ -3,7 +3,7 @@ import inspect
 import json
 import pickle
 import sys
-from typing import Self
+#from typing import Self
 import unittest
 import xmltodict
 from io import StringIO
