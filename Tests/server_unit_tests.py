@@ -202,7 +202,7 @@ class TestSimpleServer(unittest.TestCase):
         socket_s.close()
 
     def test_receive_from_client_pickle_stream(self):
-        received = pickle.dumps("data")
+        received = str(pickle.dumps("data"))
         socket_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
         result = SimpleServer.receive_from_client(received, socket_s)
