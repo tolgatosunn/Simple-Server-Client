@@ -216,7 +216,7 @@ class TestSimpleServer(unittest.TestCase):
         
         result = SimpleServer.receive_from_client(received, socket_s)
         
-        self.assertEqual(result, str({"key": "value"}))
+        self.assertEqual(result, received)
         socket_s.close()
 
     def test_receive_from_client_xml_stream(self):
